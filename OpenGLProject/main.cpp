@@ -151,7 +151,7 @@ int main(void)
         float minute = fmod(t / 60.0, 60.0);
         float second = fmod(t, 60.0);
 
-        drawClock(hour, minute, second, 0.4);
+        drawClock(hour, minute, second, 0.1);
 
 		glfwPollEvents();
 		/* Swap front and back buffers */
