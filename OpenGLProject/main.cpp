@@ -4,6 +4,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <cmath>
+#include <math.h>
 
 
 class  GeometrShape
@@ -59,90 +60,62 @@ Point::~Point()
 {
 }
 
-class Square : public GeometrShape
+void drawClockFace(int numTicks, float radius)
 {
-public:
-	Square();
-	~Square();
-	void drawSquare(float x, float y)
-	{
-
-		glBegin(GL_POLYGON);
-		SetColot(1, 1, 1);
-		glVertex2d(x, y);
-		glVertex2d(x, -y);
-		glVertex2d(-x, -y);
-		glVertex2d(-x, y);
-
-		glEnd();
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(0, 0); // center of the clock face
+	for (int i = 0; i <= numTicks; ++i) {
+		float angle = i * ((2 * M_PI) / numTicks);
+		glVertex2f(radius * cos(angle), radius * sin(angle));
 	}
-private:
-	void SetColot(float r, float g, float b)
-	{
-		glColor3d(r, g, b);
+	glEnd();
+
+	glBegin(GL_LINES);
+	for (int i = 0; i < numTicks; ++i) {
+		float angle = i * ((2 * M_PI) / numTicks);
+		glVertex2f(radius * cos(angle), radius * sin(angle));
+		glVertex2f(0.9 * radius * cos(angle), 0.9 * radius * sin(angle));
 	}
-};
-class Circle : public GeometrShape
+	glEnd();
+}
+void drawHands(int hour, float minute, float second, float radius)
 {
-public:
-	Circle();
-	~Circle();
-	void drawFilledCircle(GLfloat x, GLfloat y, GLfloat radius) {
-		const float PI = 3.1415926535;
-		int triangleAmount = 20;
-		GLfloat twicePi = 2.0f * PI;
-		CreatingTrianglesInCircle(x, y, twicePi, radius, triangleAmount);
-	}
-private:
-	void CreatingTrianglesInCircle(GLfloat x, GLfloat y, GLfloat twicePi, GLfloat radius, int triangleAmount) {
-		glBegin(GL_TRIANGLE_FAN);
-		glVertex2f(x, y);
-		for (int i = 0; i <= triangleAmount; i++) {
-			glVertex2f(
-				x + (radius * cos(i * twicePi / triangleAmount)),
-				y + (radius * sin(i * twicePi / triangleAmount))
-			);
-		}
-		glEnd();
-	}
+	const float pi = 3.14159265358979323846;
+	const float secondsAngle = (second / 60.0) * (2 * pi);
+	const float minutesAngle = ((minute + second / 60.0) / 60.0) * (2 * pi); 
+	const float hoursAngle = (((hour + minute / 60.0f) / 12.0f) * (2.0f * pi));
 
-};
-
-Circle::Circle()
-{
+	glVertex2f(0, 0);
+	glVertex2f(radius * sin(hoursAngle), radius * cos(hoursAngle));
+	glVertex2f(0, 0);
+	glVertex2f(radius * sin(minutesAngle), radius * cos(minutesAngle));
+	glVertex2f(0, 0);
+	glVertex2f(0.8 * radius * sin(secondsAngle), 0.8 * radius * cos(secondsAngle));
 }
 
-Circle::~Circle()
+void drawClock(float hour, float minute, float second, float radius)
 {
-}
-Square::Square()
-{
-}
 
-Square::~Square()
-{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-1, 1, -1, 1, -1, 1);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	drawClockFace(12, radius);
+	drawHands(hour, minute, second, radius);
+
+	glFlush();
 }
 int main(void)
 {
 	srand(time(NULL));
 	GLFWwindow* window;
 	Point point;
-	Square WhiteSquare;
-	Circle circle;
 	GeometrShape geometrShape;
-	const int Arraylength = 100;
-	float positionX[Arraylength];
-	float positionY[Arraylength];
-	float spawnAreaX = geometrShape.ConvertToPixel(200, 800);
-	float spawnAreaY = geometrShape.ConvertToPixel(200, 600);
-	float xSquare = geometrShape.ConvertToPixel(100, 800);
-	float ySquare = geometrShape.ConvertToPixel(100, 600);
-	float r = geometrShape.ConvertToPixel(10, 800);
-	for (int i = 0; i < Arraylength; i++)
-	{
-		positionX[i] = point.randomSpawn(-spawnAreaX, spawnAreaX);
-		positionY[i] = point.randomSpawn(-spawnAreaY, spawnAreaY);
-	}
 
 	/* Initialize the library */
 	if (!glfwInit())
@@ -162,28 +135,25 @@ int main(void)
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
-		/* Render here */
-		glClearColor(0.138, 0.138, 0.138, 0);
-		glClear(GL_COLOR_BUFFER_BIT);
-		WhiteSquare.drawSquare(xSquare, ySquare);
-		for (int i = 0; i < Arraylength; i++)
-		{
-			point.DrawPoint(positionX[i], positionY[i]);
-			if (positionY[i] < -ySquare || positionY[i] > ySquare || positionX[i] > xSquare || positionX[i] < -xSquare)
-			{
-				glColor3f(0.255f, 0, 0);
-				circle.drawFilledCircle(positionX[i], positionY[i], r);
-				glEnd();
-			}
-			else
-			{
-				glColor3f(0.154, 0.6, 0.2);
-				circle.drawFilledCircle(positionX[i], positionY[i], r);
-				glEnd();
-			}
-		}
+		       int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
 
-		glEnd();
+        glViewport(0, 0, width, height);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        float t = (float)glfwGetTime();
+
+		int hour = ((int)t / 3600) % 10;
+        float minute = fmod(t / 60.0, 60.0);
+        float second = fmod(t, 60.0);
+
+        drawClock(hour, minute, second, 0.4);
+
+		glfwPollEvents();
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
 

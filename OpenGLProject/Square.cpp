@@ -2,7 +2,7 @@
 
 void drawSquare(double x1, double y1, double sidelength)
 {
-    double halfside = sidelength / 2;
+    double halfside = sidelength / 6;
 
     glColor3d(0, 0, 0);
     glBegin(GL_POLYGON);
